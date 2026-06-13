@@ -32,7 +32,7 @@ FAISS_MODEL_CONFIG_FILE = FAISS_INDEX_DIR / "model_config.json"
 # === BM25 CONFIG ===
 
 # Tokenizer cho tiếng Việt
-BM25_TOKENIZER = "underthesea"  # "pyvi" hoặc "underthesea"
+BM25_TOKENIZER = "legal_regex_phrases"
 
 # BM25 parameters
 BM25_K1 = 1.5  # Term frequency saturation

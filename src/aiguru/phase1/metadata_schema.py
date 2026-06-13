@@ -25,6 +25,8 @@ class ChunkMetadata:
     parent_id: str = ""
     paragraph_number: str = ""
     sme_score: float = 0.0
+    source_note: str = ""
+    submission_eligible: bool = False
 
 
 @dataclass(frozen=True)
@@ -70,7 +72,7 @@ def normalize_article_number(value: Any) -> str:
     value = normalize_whitespace(value)
     if not value:
         return ""
-    match = re.search(r"(?:Điều|điều)\s*(\d+[a-zA-Z]?)", value)
+    match = re.search(r"(?:Điều|điều)\s*(\d+[a-zA-Z]?)\b", value)
     if match:
         return f"Điều {match.group(1)}"
     match = re.search(r"^(\d+[a-zA-Z]?)$", value)
@@ -79,16 +81,57 @@ def normalize_article_number(value: Any) -> str:
     return value
 
 
+DOC_ID_PATTERN = re.compile(
+    r"\b(?:\d{1,4}/\d{4}/QH\d+|\d{1,4}/(?:\d{4}/)?"
+    r"(?:NĐ-CP|ND-CP|[A-ZĐ0-9]+(?:-[A-ZĐ0-9]+)+))\b",
+    flags=re.IGNORECASE,
+)
+
+
+def normalize_doc_id(value: Any) -> str:
+    text = normalize_whitespace(value)
+    match = DOC_ID_PATTERN.search(text)
+    return match.group(0).upper() if match else ""
+
+
+def extract_doc_ids(value: Any) -> list[str]:
+    text = normalize_whitespace(value)
+    return list(dict.fromkeys(match.group(0).upper() for match in DOC_ID_PATTERN.finditer(text)))
+
+
+def is_submission_doc_id(value: Any) -> bool:
+    return bool(normalize_doc_id(value))
+
+
+def extract_article_from_source_note(value: Any) -> str:
+    """Prefer the original instrument article cited by a codified article."""
+    text = normalize_whitespace(value)
+    match = re.search(r"\bĐiều\s+(\d+[a-zA-Z]?)\b", text, flags=re.IGNORECASE)
+    return f"Điều {match.group(1)}" if match else ""
+
+
+def extract_articles_from_source_note(value: Any) -> list[str]:
+    text = normalize_whitespace(value)
+    return list(
+        dict.fromkeys(
+            f"Điều {match.group(1)}"
+            for match in re.finditer(r"\bĐiều\s+(\d+[a-zA-Z]?)\b", text, flags=re.IGNORECASE)
+        )
+    )
+
+
 def build_formatted_doc(doc_id: str, doc_type: str, doc_title: str) -> str:
     doc_id = normalize_whitespace(doc_id)
     doc_type = normalize_whitespace(doc_type)
     doc_title = normalize_whitespace(doc_title)
     title_core = doc_title
-    title_lower = title_core.lower()
-    if doc_id and doc_id.lower() not in title_lower:
-        title_core = f"{doc_id} {title_core}".strip()
-    if doc_type and not title_core.lower().startswith(doc_type.lower()):
-        title_core = f"{doc_type} {title_core}".strip()
+    if doc_type:
+        title_core = re.sub(rf"^{re.escape(doc_type)}\s+", "", title_core, flags=re.IGNORECASE)
+    title_core = re.sub(r"^số\s+", "", title_core, flags=re.IGNORECASE)
+    if doc_id:
+        title_core = re.sub(re.escape(doc_id), "", title_core, count=1, flags=re.IGNORECASE)
+    title_core = title_core.strip(" ,;:-")
+    title_core = " ".join(part for part in (doc_type, doc_id, title_core) if part)
     return f"{doc_id}|{title_core}"
 
 

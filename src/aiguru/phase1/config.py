@@ -59,10 +59,15 @@ SME_KEYWORDS_MEDIUM = [
 ]
 
 DOC_TYPE_PATTERNS = {
-    "Luật": ["luật"],
+    "Thông tư liên tịch": ["thông tư liên tịch", "ttlt-"],
+    "Nghị quyết liên tịch": ["nghị quyết liên tịch", "nqlt-"],
     "Nghị định": ["nghị định", "nđ-cp", "nd-cp"],
     "Thông tư": ["thông tư", "tt-btc", "tt-blđtbxh", "tt-bkhđt"],
     "Quyết định": ["quyết định", "qđ"],
+    "Nghị quyết": ["nghị quyết", "nq-cp", "nq-tw"],
+    "Pháp lệnh": ["pháp lệnh"],
+    "Bộ luật": ["bộ luật"],
+    "Luật": ["luật"],
     "Án lệ": ["án lệ"],
 }
 

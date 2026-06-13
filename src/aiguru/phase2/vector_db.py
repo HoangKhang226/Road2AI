@@ -5,8 +5,6 @@ Simplified implementation inspired by Chat With Data reference code.
 Provides persistent vector storage with Qdrant + hybrid retrieval.
 """
 
-from pathlib import Path
-import json
 from typing import List, Any, Optional
 
 from qdrant_client import QdrantClient
@@ -22,6 +20,7 @@ from llama_index.vector_stores.qdrant import QdrantVectorStore
 from llama_index.core.schema import TextNode
 from llama_index.core.retrievers import QueryFusionRetriever
 from llama_index.retrievers.bm25 import BM25Retriever
+from aiguru.paths import STORAGE_DIR
 
 
 class VectorDBManager:
@@ -39,7 +38,7 @@ class VectorDBManager:
         self.collection_name = collection_name
         
         # Storage paths
-        self.base_storage_dir = Path("storage")
+        self.base_storage_dir = STORAGE_DIR
         self.qdrant_path = self.base_storage_dir / "qdrant_data"
         self.index_metadata_dir = self.base_storage_dir / collection_name
         
@@ -128,7 +127,12 @@ class VectorDBManager:
             print(f"⚠️ Could not load index: {e}")
             return None
     
-    def add_documents(self, nodes: List[TextNode], show_progress: bool = True) -> List[str]:
+    def add_documents(
+        self,
+        nodes: List[TextNode],
+        show_progress: bool = True,
+        batch_size: int = 512,
+    ) -> List[str]:
         """
         Add documents to index.
         
@@ -147,29 +151,26 @@ class VectorDBManager:
         self._index = self.get_index()
         
         if self._index is None:
-            print("🚀 Creating new index...")
+            print("🚀 Creating new empty index...")
             storage_context = self._get_storage_context()
             self._index = VectorStoreIndex(
-                nodes=nodes_to_add,
+                nodes=[],
                 storage_context=storage_context,
                 embed_model=self.embedding_model,
-                show_progress=show_progress,
                 store_nodes_override=True,
             )
-        else:
-            print("➕ Adding to existing index...")
-            # Check for existing nodes
-            existing_ids = set(self._index.storage_context.docstore.docs.keys())
-            new_nodes = [n for n in nodes_to_add if n.node_id not in existing_ids]
-            
-            if new_nodes:
-                print(f"Inserting {len(new_nodes)} new nodes...")
-                self._index.insert_nodes(new_nodes, show_progress=show_progress)
-            else:
-                print("ℹ️ All nodes already exist in index")
-        
-        # Persist metadata
-        self._index.storage_context.persist(persist_dir=str(self.index_metadata_dir))
+        existing_ids = set(self._index.storage_context.docstore.docs.keys())
+        new_nodes = [node for node in nodes_to_add if node.node_id not in existing_ids]
+        if not new_nodes:
+            print("ℹ️ All nodes already exist in index")
+            return [node.node_id for node in nodes_to_add]
+
+        print(f"➕ Inserting {len(new_nodes)} new nodes in checkpointed batches...")
+        for start in range(0, len(new_nodes), batch_size):
+            batch = new_nodes[start : start + batch_size]
+            self._index.insert_nodes(batch, show_progress=show_progress)
+            self._index.storage_context.persist(persist_dir=str(self.index_metadata_dir))
+            print(f"  Persisted {min(start + batch_size, len(new_nodes))}/{len(new_nodes)} new nodes")
         print(f"✅ Index persisted to {self.index_metadata_dir}")
         
         return [n.node_id for n in nodes_to_add]

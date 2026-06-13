@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import json
 import pickle
+import re
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -25,6 +26,26 @@ from aiguru.phase2.config import (
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
+
+LEGAL_PHRASES = (
+    "doanh nghiệp nhỏ và vừa",
+    "hộ kinh doanh",
+    "người lao động",
+    "hợp đồng lao động",
+    "bảo hiểm xã hội",
+    "bảo hiểm thất nghiệp",
+    "thuế giá trị gia tăng",
+    "thuế thu nhập doanh nghiệp",
+    "quản lý thuế",
+    "hóa đơn điện tử",
+    "báo cáo tài chính",
+    "sở hữu trí tuệ",
+    "vốn điều lệ",
+    "xử phạt vi phạm hành chính",
+    "khắc phục hậu quả",
+    "mặt bằng sản xuất",
+    "bảo lãnh tín dụng",
+)
 
 
 def ensure_dirs() -> None:
@@ -54,17 +75,13 @@ def load_chunks() -> List[Dict[str, Any]]:
 
 
 def simple_tokenize(text: str) -> List[str]:
-    """
-    Simple whitespace tokenizer.
-    
-    Avoids Vietnamese tokenizer issues. Less accurate but reliable.
-    Can be upgraded to Vietnamese tokenizer later once working.
-    """
-    # Basic cleaning and splitting
-    tokens = text.lower().split()
-    # Remove very short tokens (likely noise)
-    tokens = [t for t in tokens if len(t) > 1]
-    return tokens
+    """Deterministic Vietnamese legal tokenizer with phrase bigrams."""
+    lowered = text.lower()
+    legal_ids = re.findall(r"\b\d{1,3}/\d{4}/[\wđ-]+\b", lowered)
+    words = re.findall(r"[0-9a-zà-ỹđ]+", lowered)
+    words = [word for word in words if len(word) > 1 or word.isdigit()]
+    phrases = [phrase.replace(" ", "_") for phrase in LEGAL_PHRASES if phrase in lowered]
+    return legal_ids + words + phrases
 
 
 def tokenize_corpus(chunks: List[Dict[str, Any]], batch_size: int = 5000) -> List[List[str]]:
@@ -139,11 +156,11 @@ def save_bm25_artifacts(
     # Save tokenizer config
     from aiguru.phase2.config import BM25_TOKENIZER_CONFIG_FILE
     tokenizer_config = {
-        "tokenizer": "simple_whitespace",
+        "tokenizer": "legal_regex_phrases",
         "bm25_k1": BM25_K1,
         "bm25_b": BM25_B,
         "corpus_size": len(chunks),
-        "created_at": datetime.utcnow().isoformat() + "Z",
+        "created_at": datetime.now(timezone.utc).isoformat(),
     }
     print(f"\nSaving tokenizer config to {BM25_TOKENIZER_CONFIG_FILE}...", flush=True)
     with BM25_TOKENIZER_CONFIG_FILE.open("w", encoding="utf-8") as f:
@@ -153,7 +170,7 @@ def save_bm25_artifacts(
     report = {
         "status": "success",
         "corpus_size": len(chunks),
-        "tokenizer": "simple_whitespace",
+        "tokenizer": "legal_regex_phrases",
         "bm25_k1": BM25_K1,
         "bm25_b": BM25_B,
         "artifacts": {

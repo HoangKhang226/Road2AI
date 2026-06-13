@@ -13,6 +13,7 @@ import json
 import re
 import sys
 from collections import Counter, defaultdict
+from dataclasses import replace
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Tuple
 
@@ -33,6 +34,7 @@ from aiguru.phase1.metadata_schema import (
     build_formatted_article,
     build_formatted_doc,
     normalize_article_number,
+    is_submission_doc_id,
     normalize_whitespace,
 )
 
@@ -125,6 +127,12 @@ def build_chunk(
         parent_id=doc_id,
         paragraph_number=paragraph_number,
         sme_score=float(doc.get("sme_score") or 0.0),
+        source_note=normalize_whitespace(doc.get("source_note")),
+        submission_eligible=bool(
+            article_number
+            and is_submission_doc_id(doc_id)
+            and doc.get("submission_article", True)
+        ),
     )
     return KnowledgeChunk(chunk_id=chunk_id, text=normalize_whitespace(text), metadata=metadata)
 
@@ -133,6 +141,17 @@ def chunk_legal_doc(doc: Dict[str, Any]) -> List[KnowledgeChunk]:
     raw_text = normalize_whitespace(doc.get("raw_text"))
     if not raw_text:
         return []
+    source_articles = [
+        normalize_article_number(article)
+        for article in (doc.get("article_numbers") or [doc.get("article_number")])
+        if normalize_article_number(article)
+    ]
+    if source_articles:
+        return [
+            build_chunk(doc, source_article, chunk_text, paragraph_number)
+            for source_article in source_articles
+            for paragraph_number, chunk_text in split_long_article(raw_text)
+        ]
     articles = split_articles(raw_text)
     chunks: List[KnowledgeChunk] = []
 
@@ -170,6 +189,41 @@ def validate_chunk(chunk: KnowledgeChunk) -> List[str]:
     return errors
 
 
+def canonicalize_document_titles(chunks: List[KnowledgeChunk]) -> List[KnowledgeChunk]:
+    """Use one stable, frequently observed title for every source document."""
+    title_counts: Dict[str, Counter] = defaultdict(Counter)
+    for chunk in chunks:
+        if chunk.metadata.submission_eligible:
+            title_counts[chunk.metadata.doc_id][chunk.metadata.doc_title] += 1
+
+    canonical = {}
+    for doc_id, counts in title_counts.items():
+        canonical[doc_id] = sorted(
+            counts,
+            key=lambda title: (-counts[title], len(title), title),
+        )[0]
+
+    normalized = []
+    for chunk in chunks:
+        title = canonical.get(chunk.metadata.doc_id)
+        if not title or title == chunk.metadata.doc_title:
+            normalized.append(chunk)
+            continue
+        formatted_doc = build_formatted_doc(
+            chunk.metadata.doc_id,
+            chunk.metadata.doc_type,
+            title,
+        )
+        metadata = replace(
+            chunk.metadata,
+            doc_title=title,
+            formatted_doc=formatted_doc,
+            formatted_article=f"{formatted_doc}|{chunk.metadata.article_number}",
+        )
+        normalized.append(KnowledgeChunk(chunk.chunk_id, chunk.text, metadata))
+    return normalized
+
+
 def run_chunking() -> Dict[str, Any]:
     ensure_dirs()
     legal_docs = read_jsonl(RAW_LEGAL_DOCS_FILE)
@@ -190,6 +244,7 @@ def run_chunking() -> Dict[str, Any]:
             continue
         all_chunks.extend(chunk_precedent(doc))
 
+    all_chunks = canonicalize_document_titles(all_chunks)
     chunk_id_counts = Counter(chunk.chunk_id for chunk in all_chunks)
     deduped_chunks: List[KnowledgeChunk] = []
     duplicate_counter: Dict[str, int] = defaultdict(int)
@@ -214,6 +269,7 @@ def run_chunking() -> Dict[str, Any]:
     doc_type_counts = Counter(chunk.metadata.doc_type for chunk in deduped_chunks)
     source_counts = Counter(chunk.metadata.source for chunk in deduped_chunks)
     missing_article_count = sum(1 for chunk in deduped_chunks if not chunk.metadata.article_number)
+    eligible_chunks = [chunk for chunk in deduped_chunks if chunk.metadata.submission_eligible]
 
     stats = {
         "total_legal_docs": len(legal_docs),
@@ -222,6 +278,11 @@ def run_chunking() -> Dict[str, Any]:
         "doc_type_counts": dict(doc_type_counts),
         "source_counts": dict(source_counts),
         "missing_article_count": missing_article_count,
+        "submission_eligible_chunk_count": len(eligible_chunks),
+        "unique_submission_doc_count": len({chunk.metadata.formatted_doc for chunk in eligible_chunks}),
+        "unique_submission_article_count": len(
+            {chunk.metadata.formatted_article for chunk in eligible_chunks}
+        ),
         "metadata_error_count": len(metadata_errors),
         "duplicate_chunk_id_count": sum(1 for _, count in chunk_id_counts.items() if count > 1),
         "output_file": str(CHUNKS_FILE),

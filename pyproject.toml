@@ -4,13 +4,25 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aiguru-legal-rag"
-version = "0.1.0"
+version = "0.2.0"
 description = "AIGuru Vietnamese legal RAG competition pipeline"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.13"
 dependencies = [
     "datasets>=2.18.0",
     "huggingface_hub>=0.20.0",
 ]
+
+[project.optional-dependencies]
+retrieval = [
+    "numpy>=1.24.0",
+    "rank-bm25>=0.2.2",
+    "qdrant-client>=1.7.0",
+    "sentence-transformers>=2.2.0",
+    "llama-index-core>=0.10.0",
+    "llama-index-vector-stores-qdrant>=0.2.0",
+    "llama-index-embeddings-huggingface>=0.2.0",
+]
+generation = ["unsloth"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

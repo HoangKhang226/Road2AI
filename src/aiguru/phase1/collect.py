@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -27,7 +27,14 @@ from aiguru.phase1.config import (
     SME_KEYWORDS_HIGH,
     SME_KEYWORDS_MEDIUM,
 )
-from aiguru.phase1.metadata_schema import infer_doc_type, normalize_whitespace
+from aiguru.phase1.metadata_schema import (
+    extract_article_from_source_note,
+    extract_articles_from_source_note,
+    extract_doc_ids,
+    infer_doc_type,
+    normalize_doc_id,
+    normalize_whitespace,
+)
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -91,19 +98,62 @@ def first_non_empty(row: Dict[str, Any], keys: List[str]) -> str:
     return ""
 
 
+def source_links_text(row: Dict[str, Any]) -> str:
+    values = []
+    for link in row.get("source_links") or []:
+        if isinstance(link, dict):
+            values.append(str(link.get("text") or link.get("href") or ""))
+        else:
+            values.append(str(link))
+    return normalize_whitespace(" ".join(values))
+
+
 def extract_doc_id(text: str) -> str:
-    text = normalize_whitespace(text)
-    patterns = [
-        r"\b\d{1,3}/\d{4}/[A-ZĐ\-]+(?:-[A-ZĐ]+)?\b",
-        r"\b\d{1,3}/\d{4}/QH\d+\b",
-        r"\b\d{1,3}/\d{4}/NĐ-CP\b",
-        r"\b\d{1,3}/\d{4}/TT-[A-ZĐ]+\b",
-    ]
-    for pattern in patterns:
-        match = re.search(pattern, text, flags=re.IGNORECASE)
+    return normalize_doc_id(text)
+
+
+def source_title(source_note: str, fallback: str) -> str:
+    """Build a compact instrument title from a Pháp điển source citation."""
+    source_note = normalize_whitespace(source_note)
+    if not source_note:
+        return fallback
+    doc_id = extract_doc_id(source_note)
+    if doc_id:
+        match = re.search(
+            rf"(?:Thông tư liên tịch|Nghị quyết liên tịch|Bộ luật|Luật|"
+            rf"Nghị định|Thông tư|Quyết định|Nghị quyết|Pháp lệnh)"
+            rf"\s+(?:số\s+)?{re.escape(doc_id)}",
+            source_note,
+            flags=re.IGNORECASE,
+        )
         if match:
-            return match.group(0).upper()
-    return ""
+            source_note = source_note[match.start():]
+    cleaned = re.sub(r"^\(?\s*(?:Điều|Khoản|Điểm)\s+\w+\s+", "", source_note, flags=re.IGNORECASE)
+    issue_dates = list(
+        re.finditer(r"\s+ngày\s+\d{1,2}/\d{1,2}/\d{4}\b", cleaned, flags=re.IGNORECASE)
+    )
+    if issue_dates:
+        cleaned = cleaned[: issue_dates[0].start()]
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" ();,.-")
+    return cleaned[:500] or fallback
+
+
+def best_source_title(source_note: str, link_text: str, fallback: str) -> str:
+    candidates = {
+        source_title(value, fallback)
+        for value in (source_note, link_text)
+        if normalize_whitespace(value)
+    }
+    if not candidates:
+        return fallback
+    return sorted(
+        candidates,
+        key=lambda value: (
+            "http" in value.lower(),
+            " ngày " in value.lower(),
+            len(value),
+        ),
+    )[0]
 
 
 def score_sme(text: str) -> float:
@@ -120,7 +170,7 @@ def score_sme(text: str) -> float:
 
 def normalize_legal_doc(row: Dict[str, Any], source: str) -> Dict[str, Any]:
     # Phapdien 'articles' subset: content_text, article_title, chapter_title
-    title = first_non_empty(
+    article_title = first_non_empty(
         row,
         [
             "article_title",
@@ -129,6 +179,14 @@ def normalize_legal_doc(row: Dict[str, Any], source: str) -> Dict[str, Any]:
             "subject_title",
             "topic_title",
         ],
+    )
+    source_note = first_non_empty(row, ["source_note_text", "source_note", "citation"])
+    link_text = source_links_text(row)
+    if not source_note:
+        source_note = link_text
+    title = first_non_empty(
+        row,
+        ["document_title", "document_name", "law_title", "subject_title", "topic_title"],
     )
     raw_text = first_non_empty(
         row,
@@ -140,24 +198,44 @@ def normalize_legal_doc(row: Dict[str, Any], source: str) -> Dict[str, Any]:
             "noi_dung",
         ],
     )
-    combined = f"{title} {raw_text}"
-    doc_id = first_non_empty(row, ["doc_id", "law_id", "so_hieu", "document_id", "article_anchor", "id"])
-    if not extract_doc_id(doc_id):
-        extracted = extract_doc_id(combined)
-        if extracted:
-            doc_id = extracted
+    combined = f"{source_note} {link_text} {title} {article_title} {raw_text}"
+    doc_id = extract_doc_id(
+        first_non_empty(row, ["doc_id", "law_id", "so_hieu", "document_id", "document_code"])
+    )
+    if not doc_id:
+        doc_id = extract_doc_id(combined)
     doc_type = first_non_empty(row, ["doc_type", "loai_van_ban", "type"])
     if not doc_type:
-        doc_type = infer_doc_type(combined, DOC_TYPE_PATTERNS)
+        doc_type = infer_doc_type(source_note or combined, DOC_TYPE_PATTERNS)
+    article_number = first_non_empty(row, ["article_number", "article_num"])
+    article_numbers = [article_number] if article_number else []
+    submission_article = bool(article_numbers)
+    if not article_numbers:
+        source_articles = extract_articles_from_source_note(source_note)
+        # Multiple source articles are safe only when they map to one instrument.
+        article_numbers = source_articles if len(extract_doc_ids(source_note)) == 1 else source_articles[:1]
+        article_number = article_numbers[0] if article_numbers else ""
+        submission_article = bool(article_numbers)
+    if not article_number:
+        article_number = extract_article_from_source_note(article_title)
+    enriched_text = ". ".join(
+        value for value in (article_title, raw_text, f"Căn cứ nguồn: {source_note}" if source_note else "")
+        if value
+    )
     return {
         "doc_id": normalize_whitespace(doc_id),
         "doc_type": normalize_whitespace(doc_type),
-        "doc_title": title or normalize_whitespace(row.get("title", "")),
+        "doc_title": best_source_title(source_note, link_text, title or article_title),
+        "article_number": article_number,
+        "article_numbers": article_numbers,
+        "submission_article": submission_article,
+        "article_title": article_title,
+        "source_note": source_note,
         "source": source,
-        "raw_text": raw_text,
+        "raw_text": enriched_text,
         "structure": row,
         "sme_score": score_sme(combined),
-        "collected_at": datetime.utcnow().isoformat() + "Z",
+        "collected_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
@@ -195,14 +273,14 @@ def normalize_precedent(row: Dict[str, Any], source: str) -> Dict[str, Any]:
         "applied_article_number": applied_article,
         "applied_article_code": applied_code,
         "sme_score": score_sme(f"{title} {raw_text}"),
-        "collected_at": datetime.utcnow().isoformat() + "Z",
+        "collected_at": datetime.now(timezone.utc).isoformat(),
     }
 
 
 def collect() -> Dict[str, Any]:
     ensure_dirs()
     report: Dict[str, Any] = {
-        "created_at": datetime.utcnow().isoformat() + "Z",
+        "created_at": datetime.now(timezone.utc).isoformat(),
         "legal_docs": {},
         "precedents": {},
     }
