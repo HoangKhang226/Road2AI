@@ -1,0 +1,143 @@
+{
+  "doc_id": "163721",
+  "thuoc_tinh": {
+    "id": "163721",
+    "so_hieu": "96/2023/TT-BQP",
+    "ten_van_ban": "Thông tư số 96/2023/TT-BQP quy định Quy chuẩn kỹ thuật quốc gia về đặc tính kỹ thuật mật mã sử dụng trong các sản phẩm mật mã dân sự thuộc nhóm sản phẩm bảo mật dữ liệu lưu giữ",
+    "loai_van_ban": "Thông tư",
+    "loai_code": "TT",
+    "ngay_ban_hanh": "2023-11-29T00:00:00",
+    "hieu_luc_tu": "2024-01-15T00:00:00",
+    "hieu_luc_den": null,
+    "trang_thai_hieu_luc": "Còn hiệu lực",
+    "trang_thai_code": "CHL",
+    "co_quan_ban_hanh": "Bộ Quốc phòng",
+    "bo_nganh": "Bộ Quốc phòng",
+    "ngon_ngu": "vi",
+    "luot_xem": 106,
+    "ngay_cap_nhat": "2026-04-05T09:31:45",
+    "trang_thai_xuat_ban": "Publish",
+    "is_luat": true,
+    "is_cu": true,
+    "has_content": true,
+    "file_pdf": "96.2023.TT-BQP.pdf",
+    "file_doc": null,
+    "url_chi_tiet": "https://vbpl.vn/van-ban/chi-tiet/--163721",
+    "url_pdf": "https://vbpl.vn/file/96.2023.TT-BQP.pdf",
+    "url_doc": null
+  },
+  "noi_dung": {
+    "id": "163721",
+    "title": null,
+    "content_html": "<html>\n <head></head>\n <body>\n  <div>\n   <div style=\"width: 100%; font-family: 'Times New Roman', serif; font-size: 14px; color: #000;\">\n    <div style=\"width: 100%; display: table; table-layout: fixed;\">\n     <div style=\"display: table-cell; width: 50%; text-align: center; vertical-align: top; font-weight: bold; text-transform: uppercase; line-height: 1.8;\">\n      <div>\n       <span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>BỘ QUỐC PHÒNG</strong></span>\n      </div>\n      <div style=\"width: 150px; margin: 4px auto 0; border-bottom: 1px solid #000;\"></div>\n     </div>\n     <div style=\"display: table-cell; width: 50%; text-align: center; vertical-align: top; font-weight: bold; line-height: 1.8;\">\n      <div>\n       <span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</strong></span>\n      </div>\n      <div>\n       <span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>Độc lập – Tự do – Hạnh phúc</strong></span>\n      </div>\n      <div style=\"width: 120px; margin: 4px auto 0; border-bottom: 1px solid #000;\"></div>\n     </div>\n    </div>\n    <div style=\"width: 100%; display: table; table-layout: fixed; margin-top: 16px; line-height: 1.2; margin-bottom: 16px;\">\n     <div style=\"display: table-cell; width: 50%; text-align: center; vertical-align: top;\">\n      <span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\">Số: 96/2023/TT-BQP</span>\n     </div>\n     <div style=\"display: table-cell; width: 50%; text-align: center; vertical-align: top; font-style: italic;\">\n      <span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><em>Ngày 29 tháng 11 năm 2023</em></span>\n     </div>\n    </div>\n   </div>\n  </div>\n  <p style=\"font-family: 'Times New Roman', Times, serif;\"></p>\n  <p align=\"center\"><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>THÔNG TƯ</strong></span></p>\n  <p align=\"center\"><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>Ban hành “Quy chuẩn kỹ thuật quốc gia về đặc tính kỹ thuật mật mã</strong></span></p>\n  <p align=\"center\" style=\"font-family: 'Times New Roman', Times, serif;\"><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>&nbsp;sử dụng trong các sản phẩm mật mã dân sự thuộc nhóm sản phẩm</strong></span></p>\n  <p align=\"center\" style=\"font-family: 'Times New Roman', Times, serif;\"><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>&nbsp;bảo mật dữ liệu lưu giữ\"</strong></span></p>\n  <p align=\"center\" style=\"font-family: 'Times New Roman', Times, serif;\"><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong></strong></span></p>\n  <p><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><em>Căn cứ Luật Tiêu chuẩn và Quy chuẩn kỹ thuật ngày 29 tháng 6 năm 2006;</em></span></p>\n  <p><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><em>Căn cứ Luật An toàn thông tin mạng ngày 19 tháng 11 năm 2015;</em></span></p>\n  <p><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><em>Căn cứ Nghị định số <a target=\"_blank\" rel=\"noopener noreferrer\">127/2007/NĐ-CP</a> ngày 01 tháng 8 năm 2007 của Chính phủ quy định chi tiết thi hành một số điều của Luật Tiêu chuẩn và Quy chuẩn kỹ thuật; được sửa đổi, bổ sung một số điều tại Nghị định số <a target=\"_blank\" rel=\"noopener noreferrer\">78/2018/NĐ-CP</a> ngày 16 tháng 5 năm 2018 của Chính phủ;</em></span></p>\n  <p><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><em>Căn cứ Nghị định số <a target=\"_blank\" rel=\"noopener noreferrer\">01/2022/NĐ-CP</a> ngày 30 tháng 11 năm 2022 của Chính phủ quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Bộ Quốc phòng;</em></span></p>\n  <p><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><em>Căn cứ Nghị định số 09/2014/NĐ-CP ngày 27 tháng 01 năm 2014 của Chính phủ quy định chức năng, nhiệm vụ, quyền hạn và cơ cấu tổ chức của Ban Cơ yếu Chính phủ;</em></span></p>\n  <p><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><em>Theo đề nghị của Trưởng ban Ban Cơ yếu Chính phủ;</em></span></p>\n  <p><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><em>Bộ trưởng Bộ Quốc phòng ban hành Thông tư quy định Quy chuẩn kỹ thuật quốc gia về đặc tính kỹ thuật mật mã sử dụng trong các sản phẩm mật mã dân sự thuộc nhóm sản phẩm bảo mật dữ liệu lưu giữ.</em></span></p>\n  <p id=\"4c09871a-df3c-11f0-b0f3-f1a3fbe3dc6e\" class=\"prov-article\" style=\"font-family: 'Times New Roman', Times, serif;\"><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>Điều 1. </strong>Ban hành kèm theo Thông tư này Quy chuẩn kỹ thuật quốc gia về đặc tính kỹ thuật mật mã sử dụng trong các sản phẩm mật mã dân sự thuộc nhóm sản phẩm bảo mật dữ liệu lưu giữ.</span></p>\n  <p id=\"4c09871a-df3c-11f0-b0f3-f1a3fbe3dc6e\" class=\"prov-content\" style=\"font-family: 'Times New Roman', Times, serif;\"><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\">Ký hiệu: QCVN 15:2023/BQP.</span></p>\n  <p id=\"4c098724-df3c-11f0-8d21-afa0d88c87fa\" class=\"prov-article\" style=\"font-family: 'Times New Roman', Times, serif;\"><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>Điều 2. </strong>Thông tư này có hiệu lực thi hành kể từ ngày 15 tháng 01 năm 2024.</span></p>\n  <p id=\"4c09872e-df3c-11f0-aac0-ed59843c2937\" class=\"prov-article\" style=\"font-family: 'Times New Roman', Times, serif;\"><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>Điều 3. </strong>Trưởng ban Ban Cơ yếu Chính phủ, Thủ trưởng các cơ quan, đơn vị, tổ chức và cá nhân có liên quan chịu trách nhiệm thi hành Thông tư này./.</span></p>\n  <div>\n   <div style=\"width: 100%; margin-top: 32px; font-family: 'Times New Roman', serif; font-size: 14px; color: #000; display: flex; justify-content: flex-end;\">\n    <div style=\"display: table-cell; width: 50%; text-align: center; vertical-align: top; font-weight: bold; line-height: 1.8;\">\n     <div style=\"font-weight: bold; text-transform: uppercase; line-height: 1.3;\">\n      <span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>KT. BỘ TRƯỞNG </strong> </span>\n      <br><span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>THỨ TRƯỞNG</strong></span>\n     </div>\n     <div style=\"font-style: italic; font-weight: bold;\">\n      <span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>(Đã ký)</strong></span>\n     </div>\n     <div style=\"font-weight: bold; margin-top: 16px;\">\n      <span style=\"font-family: 'times new roman', times, serif; font-size: 14px;\"><strong>Thượng tướng Nguyễn Tân Cương</strong></span>\n     </div>\n    </div>\n   </div>\n  </div>\n </body>\n</html>",
+    "content_length": 7029
+  },
+  "luoc_do": {
+    "van_ban_duoc_tac_dong": [
+      {
+        "quan_he_id": "3",
+        "quan_he": "Căn cứ ban hành",
+        "id": "13716",
+        "name": "Nghị định số 127/2007/NĐ-CP Quy định chi tiết thi hành một số điều của Luật Tiêu chuẩn và Quy chuẩn kỹ thuật",
+        "url": "https://vbpl.vn/van-ban/chi-tiet/--13716"
+      },
+      {
+        "quan_he_id": "3",
+        "quan_he": "Căn cứ ban hành",
+        "id": "15062",
+        "name": "Luật Tiêu chuẩn và quy chuẩn kỹ thuật số 68/2006/QH11",
+        "url": "https://vbpl.vn/van-ban/chi-tiet/--15062"
+      },
+      {
+        "quan_he_id": "3",
+        "quan_he": "Căn cứ ban hành",
+        "id": "95908",
+        "name": "Luật An toàn thông tin mạng số 86/2015/QH13",
+        "url": "https://vbpl.vn/van-ban/chi-tiet/--95908"
+      },
+      {
+        "quan_he_id": "3",
+        "quan_he": "Căn cứ ban hành",
+        "id": "129692",
+        "name": "Nghị định số 78/2018/NĐ-CP Sửa đổi, bổ sung một số đều của Nghị định số 127/2007/NĐ-CP ngày 01 tháng 8 năm 2007 của Chính phủ quy định chi tiết thi hành một số điều Luật tiêu chuẩn và quy chuẩn kỹ thuật.",
+        "url": "https://vbpl.vn/van-ban/chi-tiet/--129692"
+      },
+      {
+        "quan_he_id": "10",
+        "quan_he": "Sửa đổi, bổ sung",
+        "id": "129692",
+        "name": "Nghị định số 78/2018/NĐ-CP Sửa đổi, bổ sung một số đều của Nghị định số 127/2007/NĐ-CP ngày 01 tháng 8 năm 2007 của Chính phủ quy định chi tiết thi hành một số điều Luật tiêu chuẩn và quy chuẩn kỹ thuật.",
+        "url": "https://vbpl.vn/van-ban/chi-tiet/--129692"
+      }
+    ],
+    "van_ban_tac_dong": []
+  },
+  "lich_su": [
+    {
+      "ngay_thay_doi": "2026-04-07T03:35:50.183544",
+      "loai_thay_doi": "3",
+      "noi_dung": "CHL",
+      "nguoi_thay_doi": "Admin",
+      "van_ban_nguon": "96/2023/TT-BQP"
+    },
+    {
+      "ngay_thay_doi": "2026-03-27T17:11:38.909423",
+      "loai_thay_doi": "3",
+      "noi_dung": "CHL",
+      "nguoi_thay_doi": "Admin",
+      "van_ban_nguon": "96/2023/TT-BQP"
+    },
+    {
+      "ngay_thay_doi": "2026-03-25T17:02:26.569844",
+      "loai_thay_doi": "3",
+      "noi_dung": "CHL",
+      "nguoi_thay_doi": "Admin",
+      "van_ban_nguon": "96/2023/TT-BQP"
+    },
+    {
+      "ngay_thay_doi": "2026-03-11T16:54:57.35945",
+      "loai_thay_doi": "3",
+      "noi_dung": "CHL",
+      "nguoi_thay_doi": "Admin",
+      "van_ban_nguon": "96/2023/TT-BQP"
+    },
+    {
+      "ngay_thay_doi": "2025-12-31T02:12:24.826673",
+      "loai_thay_doi": "3",
+      "noi_dung": "CHL",
+      "nguoi_thay_doi": "Admin",
+      "van_ban_nguon": "96/2023/TT-BQP"
+    },
+    {
+      "ngay_thay_doi": "2025-12-23T00:18:52.866895",
+      "loai_thay_doi": "3",
+      "noi_dung": "DATE_BH",
+      "nguoi_thay_doi": "Admin",
+      "van_ban_nguon": null
+    },
+    {
+      "ngay_thay_doi": "2024-01-15T07:00:00",
+      "loai_thay_doi": "3",
+      "noi_dung": "DATE_HL",
+      "nguoi_thay_doi": "Job",
+      "van_ban_nguon": null
+    }
+  ],
+  "files_dinh_kem": [
+    {
+      "file_name": "96.2023.TT-BQP.pdf",
+      "loai_file": "PDF",
+      "file_title": "96.2023.TT-BQP.pdf",
+      "file_order": null,
+      "url": "https://vbpl.vn/file/96.2023.TT-BQP.pdf"
+    },
+    {
+      "file_name": "VanBanGoc_96.2023.TT-BQP.pdf",
+      "loai_file": "PDF",
+      "file_title": "VanBanGoc_96.2023.TT-BQP.pdf",
+      "file_order": null,
+      "url": "https://vbpl.vn/file/VanBanGoc_96.2023.TT-BQP.pdf"
+    }
+  ],
+  "crawled_at": "2026-06-10T12:58:56.002088"
+}
