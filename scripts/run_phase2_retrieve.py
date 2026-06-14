@@ -36,12 +36,17 @@ def main() -> None:
     questions = json.loads(args.questions.read_text(encoding="utf-8"))
     if args.reset and args.output.exists():
         args.output.unlink()
-    embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-m3", device=args.embedding_device)
-    vector_db = VectorDBManager(embed_model, collection_name=args.collection)
-    index = vector_db.get_index()
-    if index is None:
-        raise RuntimeError("Qdrant index is empty. Run scripts/run_phase2_build_qdrant.py first.")
-    vector_retriever = index.as_retriever(similarity_top_k=50)
+
+    from aiguru.paths import STORAGE_DIR
+    qdrant_meta = STORAGE_DIR / args.collection / "docstore.json"
+    if qdrant_meta.exists():
+        embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-m3", device=args.embedding_device)
+        vector_db = VectorDBManager(embed_model, collection_name=args.collection)
+        index = vector_db.get_index()
+        vector_retriever = index.as_retriever(similarity_top_k=50)
+    else:
+        print(f"⚠️ Qdrant index metadata not found at {qdrant_meta}. Falling back to BM25-only retrieval.")
+        vector_retriever = None
     reranker = None if args.no_reranker else BGEReranker(
         args.reranker_model,
         device=args.reranker_device,

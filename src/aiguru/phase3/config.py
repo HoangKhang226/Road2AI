@@ -14,23 +14,24 @@ class GenerationConfig:
     )
     max_seq_length: int = int(os.getenv("AIGURU_MAX_SEQ_LENGTH", "8192"))
     max_new_tokens: int = int(os.getenv("AIGURU_MAX_NEW_TOKENS", "1024"))
-    max_context_chars: int = int(os.getenv("AIGURU_MAX_CONTEXT_CHARS", "18000"))
-    batch_size: int = int(os.getenv("AIGURU_GENERATION_BATCH_SIZE", "4"))
+    max_context_chars: int = int(os.getenv("AIGURU_MAX_CONTEXT_CHARS", "6000"))
+    batch_size: int = int(os.getenv("AIGURU_GENERATION_BATCH_SIZE", "12"))
     temperature: float = float(os.getenv("AIGURU_TEMPERATURE", "0.0"))
     top_p: float = float(os.getenv("AIGURU_TOP_P", "0.9"))
     repetition_penalty: float = float(os.getenv("AIGURU_REPETITION_PENALTY", "1.1"))
     load_in_4bit: bool = os.getenv("AIGURU_LOAD_IN_4BIT", "1") != "0"
 
 
-SYSTEM_PROMPT = """Bạn là trợ lý pháp lý AI chuyên về pháp luật Việt Nam cho doanh nghiệp SME.
+SYSTEM_PROMPT = """Bạn là trợ lý pháp lý AI chuyên về pháp luật Việt Nam cho doanh nghiệp SME. Hãy trả lời câu hỏi của người dùng một cách trực tiếp, chính xác dựa trên tài liệu được cung cấp. Không tóm tắt tài liệu một cách chung chung mà hãy tập trung trả lời đúng vào trọng tâm câu hỏi.
 
 QUY TẮC BẮT BUỘC:
-1. Chỉ sử dụng thông tin trong [CONTEXT]. Không bịa đặt điều luật, số hiệu văn bản hoặc dữ kiện.
-2. Chỉ được trích dẫn các mục [TRÍCH DẪN HỢP LỆ] xuất hiện trong context.
-3. Khi trích dẫn căn cứ pháp lý, phải nêu rõ Điều X và tên văn bản tương ứng.
-4. Nếu context không đủ căn cứ, nói rõ hệ thống dữ liệu chưa ghi nhận quy định cụ thể.
+1. Trả lời trực tiếp vào câu hỏi của người dùng bằng tiếng Việt.
+2. Chỉ sử dụng thông tin trong [CONTEXT] để làm căn cứ. Không bịa đặt điều luật, số hiệu văn bản hoặc dữ kiện.
+3. Chỉ được trích dẫn các mục [TRÍCH DẪN HỢP LỆ] xuất hiện trong context. Khi trích dẫn căn cứ pháp lý, phải nêu rõ Điều X và tên văn bản tương ứng.
+4. Nếu context không đủ căn cứ trả lời, nói rõ hệ thống dữ liệu chưa ghi nhận quy định cụ thể.
 5. Trả lời rõ ràng, thực tiễn, phù hợp với người đọc không chuyên.
-6. Kết thúc bằng cảnh báo giới hạn chuẩn."""
+6. Kết thúc bằng cảnh báo giới hạn chuẩn.
+7. BẮT BUỘC viết toàn bộ câu trả lời bằng tiếng Việt. Tuyệt đối không dùng tiếng Anh."""
 
 
 ANSWER_FORMAT = """Trả lời theo cấu trúc:

@@ -81,13 +81,14 @@ def build_chat_messages(
     max_context_chars: int | None = None,
 ) -> List[dict]:
     context = format_legal_context(chunks, max_chars=max_context_chars)
-    user_prompt = f"""Câu hỏi: {question.strip()}
-
-{ANSWER_FORMAT}
-
-[CONTEXT]
+    user_prompt = f"""[CONTEXT]
 {context}
-[/CONTEXT]"""
+[/CONTEXT]
+
+Dựa trên tài liệu [CONTEXT] ở trên, hãy trả lời câu hỏi sau bằng tiếng Việt:
+Câu hỏi: {question.strip()}
+
+{ANSWER_FORMAT}"""
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_prompt},
@@ -101,25 +102,80 @@ class UnslothGenerator:
         self.model = model
         self.tokenizer = tokenizer
         self.config = config or GenerationConfig()
-        self.tokenizer.padding_side = "left"
-        self.tokenizer.truncation_side = "right"
-        if self.tokenizer.pad_token is None:
-            self.tokenizer.pad_token = self.tokenizer.eos_token
+        if self.tokenizer is not None:
+            self.tokenizer.padding_side = "left"
+            self.tokenizer.truncation_side = "right"
+            if self.tokenizer.pad_token is None:
+                self.tokenizer.pad_token = self.tokenizer.eos_token
 
     @classmethod
     def from_pretrained(cls, config: GenerationConfig | None = None) -> "UnslothGenerator":
         config = config or GenerationConfig()
-        # Unsloth must be imported before transformers to enable its memory patches.
-        from unsloth import FastLanguageModel
+        
+        # Check if local Ollama API is available
+        import urllib.request
+        import json
+        try:
+            with urllib.request.urlopen("http://localhost:11434/api/tags", timeout=1.0) as response:
+                if response.status == 200:
+                    print("✅ Found running local Ollama API. Using Ollama for high-speed generation.")
+                    return cls(model="ollama", tokenizer=None, config=config)
+        except Exception:
+            pass
 
-        model, tokenizer = FastLanguageModel.from_pretrained(
-            model_name=config.model_name,
-            max_seq_length=config.max_seq_length,
-            dtype=None,
-            load_in_4bit=config.load_in_4bit,
-        )
-        FastLanguageModel.for_inference(model)
-        return cls(model=model, tokenizer=tokenizer, config=config)
+        try:
+            # Unsloth must be imported before transformers to enable its memory patches.
+            from unsloth import FastLanguageModel
+
+            model, tokenizer = FastLanguageModel.from_pretrained(
+                model_name=config.model_name,
+                max_seq_length=config.max_seq_length,
+                dtype=None,
+                load_in_4bit=config.load_in_4bit,
+            )
+            FastLanguageModel.for_inference(model)
+            return cls(model=model, tokenizer=tokenizer, config=config)
+        except (ImportError, ModuleNotFoundError, RuntimeError, Exception) as e:
+            print(f"⚠️ Unsloth import/load failed ({e}). Falling back to standard transformers...")
+            from transformers import AutoModelForCausalLM, AutoTokenizer
+            import torch
+            import platform
+
+            model_name = config.model_name
+            # If the model name is the unsloth 4-bit bnb model, standard transformers cannot load it on Mac/CPU easily.
+            # Map to a standard compatible model.
+            if "unsloth/Qwen2.5" in model_name or "bnb-4bit" in model_name:
+                if platform.system() == "Darwin":
+                    # For Apple Silicon, 3B or 1.5B fits and runs well in memory
+                    model_name = "Qwen/Qwen2.5-3B-Instruct"
+                else:
+                    model_name = "Qwen/Qwen2.5-7B-Instruct"
+                print(f"👉 Mapped model to standard HF model: {model_name}")
+
+            tokenizer = AutoTokenizer.from_pretrained(model_name)
+            
+            # Determine device
+            device = "cpu"
+            if torch.backends.mps.is_available():
+                device = "mps"
+            elif torch.cuda.is_available():
+                device = "cuda"
+
+            torch_dtype = torch.bfloat16 if torch.cuda.is_available() else (torch.float16 if device == "mps" else torch.float32)
+            print(f"Loading model {model_name} on device {device} with dtype {torch_dtype}...")
+            
+            model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                torch_dtype=torch_dtype,
+                device_map="auto" if device == "cuda" else None,
+            )
+            if device == "mps" or device == "cuda":
+                if device == "mps":
+                    model = model.to("mps")
+                elif device == "cuda" and not hasattr(model, "hf_device_map"):
+                    model = model.to("cuda")
+
+            return cls(model=model, tokenizer=tokenizer, config=config)
 
     def _device(self) -> Any:
         try:
@@ -130,6 +186,44 @@ class UnslothGenerator:
     def generate(self, questions: Sequence[str], contexts: Sequence[Sequence[RetrievedChunk]]) -> List[str]:
         if len(questions) != len(contexts):
             raise ValueError("questions and contexts must have equal length")
+
+        if self.model == "ollama":
+            import json
+            import urllib.request
+            from concurrent.futures import ThreadPoolExecutor
+
+            def call_ollama(args):
+                question, chunks = args
+                messages = build_chat_messages(question, chunks, self.config.max_context_chars)
+                payload = {
+                    "model": "qwen2.5:3b",
+                    "messages": messages,
+                    "stream": False,
+                    "options": {
+                        "temperature": self.config.temperature if self.config.temperature > 0 else 0.0,
+                        "top_p": self.config.top_p if self.config.temperature > 0 else 1.0,
+                        "num_predict": self.config.max_new_tokens,
+                    }
+                }
+                req = urllib.request.Request(
+                    "http://localhost:11434/api/chat",
+                    data=json.dumps(payload).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST"
+                )
+                try:
+                    with urllib.request.urlopen(req, timeout=120.0) as response:
+                        res_data = json.loads(response.read().decode("utf-8"))
+                        answer = res_data["message"]["content"]
+                        return answer.strip()
+                except Exception as e:
+                    print(f"❌ Ollama API call failed: {e}")
+                    return "Lỗi: Không thể kết nối local Ollama API."
+
+            max_workers = 3
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                answers = list(executor.map(call_ollama, zip(questions, contexts)))
+            return answers
 
         prompts = [
             self.tokenizer.apply_chat_template(

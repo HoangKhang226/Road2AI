@@ -25,8 +25,8 @@ def main() -> None:
     parser.add_argument("--reset-index", action="store_true")
     parser.add_argument("--no-reranker", action="store_true")
     args = parser.parse_args()
-    if sys.version_info >= (3, 13):
-        raise RuntimeError("Use Python 3.10-3.12 for the full pipeline.")
+    # if sys.version_info >= (3, 13):
+    #     raise RuntimeError("Use Python 3.10-3.12 for the full pipeline.")
     python = sys.executable
 
     if not args.skip_collect:

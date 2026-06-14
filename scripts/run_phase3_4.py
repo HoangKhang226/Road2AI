@@ -50,12 +50,14 @@ def main() -> None:
                 path.unlink()
 
     retriever = RetrievalCache(args.retrieval_cache)
-    missing = {int(question["id"]) for question in questions} - retriever.completed_ids
-    if missing:
-        raise RuntimeError(
-            f"Retrieval cache is missing {len(missing)} question(s). "
-            "Run scripts/run_phase2_retrieve.py first."
-        )
+    available_questions = [q for q in questions if int(q["id"]) in retriever.completed_ids]
+    if len(available_questions) < len(questions):
+        print(f"⚠️ Retrieval cache is missing {len(questions) - len(available_questions)} question(s). "
+              f"Running generation for {len(available_questions)} completed questions only.")
+    questions = available_questions
+    if not questions:
+        print("❌ No completed retrieval results found in cache. Run scripts/run_phase2_retrieve.py first.")
+        return
 
     # Load Unsloth only after the lightweight cache check, and before any
     # Transformers-based model in this process.

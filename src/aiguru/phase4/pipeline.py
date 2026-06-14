@@ -40,4 +40,5 @@ def run_generation_pipeline(
                 chunks=chunks,
             )
             written += int(result_store.append(result))
+        print(f"Generated {start + len(batch)}/{len(pending)} answers...")
     return written
