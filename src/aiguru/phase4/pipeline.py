@@ -30,7 +30,8 @@ def run_generation_pipeline(
             else:
                 items = retriever.retrieve(str(question["question"]))
             chunks = normalize_retrieval_results(items)[:retrieval_top_k]
-            contexts.append(chunks)
+            selected_chunks = postprocessor.select_relevant_chunks(chunks)
+            contexts.append(selected_chunks)
         answers = generator.generate([str(item["question"]) for item in batch], contexts)
         for question, answer, chunks in zip(batch, answers, contexts):
             result = postprocessor.build_result(
