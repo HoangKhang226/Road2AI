@@ -30,7 +30,7 @@ def main():
     """Build Qdrant index from chunks.jsonl."""
     parser = argparse.ArgumentParser()
     parser.add_argument("--device", default="cuda")
-    parser.add_argument("--batch-size", type=int, default=512)
+    parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--reset", action="store_true")
     args = parser.parse_args()
     from llama_index.embeddings.huggingface import HuggingFaceEmbedding
