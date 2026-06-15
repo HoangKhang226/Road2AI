@@ -21,7 +21,7 @@ Phase 1 đã thiết lập thành công pipeline thu thập dữ liệu cho hệ
 
 ---
 
-## Cấu Trúc Hạ Tầng
+## Cấu Trúc
 
 ### 1.1 Package Structure
 

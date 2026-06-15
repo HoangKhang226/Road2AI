@@ -90,3 +90,7 @@ rerunning the LLM:
 python scripts/retune_submission.py --min-articles 3 --max-articles 8 \
   --safe-threshold 0.3 --high-conf-threshold 0.5
 ```
+
+---
+
+# R2AI-MENTOR-DAY2
