@@ -78,6 +78,7 @@ def main():
     embed_model = HuggingFaceEmbedding(
         model_name="BAAI/bge-m3",
         device=args.device,
+        max_length=1024,
     )
     print(f"✅ Model loaded: BAAI/bge-m3 on {args.device}")
     
