@@ -248,12 +248,19 @@ def chunks_to_nodes(chunks: List[dict]) -> List[TextNode]:
     Returns:
         List of TextNode objects
     """
+    import uuid
+    import hashlib
     nodes = []
     for chunk in chunks:
+        # Generate a deterministic valid UUID from the string chunk_id
+        chunk_uuid = str(uuid.UUID(hashlib.md5(chunk["chunk_id"].encode("utf-8")).hexdigest()))
+        metadata = chunk.get("metadata", {}).copy()
+        metadata["original_chunk_id"] = chunk["chunk_id"]
+        
         node = TextNode(
             text=chunk["text"],
-            id_=chunk["chunk_id"],
-            metadata=chunk.get("metadata", {}),
+            id_=chunk_uuid,
+            metadata=metadata,
         )
         nodes.append(node)
     return nodes
