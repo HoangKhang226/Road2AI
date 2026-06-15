@@ -81,7 +81,7 @@ graph TD
     D --> E["🛡️ Bước 5: Post-Processing<br/>3-Tier Fallback"]
     E --> F["📤 Bước 6: Validation & Submit<br/>Local Eval + Promote"]
 
-    B -.->|"FAISS Index +<br/>JSONL Metadata Store"| C
+    B -.->|"Qdrant Index +<br/>JSONL Metadata Store"| C
     C -.->|"formatted_doc<br/>formatted_article"| E
 ```
 
@@ -141,13 +141,12 @@ Mỗi chunk sau khi Structural Chunking sẽ tuân theo schema cố định:
 ```
 knowledge_store/
 ├── chunks.jsonl          # Mỗi dòng = 1 chunk JSON (schema ở trên)
-├── faiss_index.bin       # FAISS FlatIP index từ embeddings
-├── chunk_id_map.json     # Map index_position → chunk_id
-└── bm25_corpus.pkl       # BM25 pre-built corpus (pickle)
+├── bm25/                 # BM25 pre-built corpus
+└── storage/aiguru_legal/ # Qdrant persistent index từ embeddings
 ```
 
-- **FAISS FlatIP** (in-memory) — đủ nhanh cho < 50K chunks trên Colab
-- **JSONL** cho metadata — load nhanh, dễ debug, không cần DB
+- **Qdrant Vector DB** (persistent) — lưu trực tiếp xuống ổ cứng, chống sập RAM Colab
+- **JSONL** cho metadata — load nhanh, dễ debug, dễ checkpoint
 
 ---
 
@@ -171,7 +170,7 @@ graph LR
 **Tầng 1 — BM25 (Sparse)**
 
 - Thư viện: `rank_bm25`
-- Tokenizer: `underthesea` hoặc `pyvi` (word segmentation tiếng Việt)
+- Tokenizer: N-gram Regex + Legal Phrases (thay thế AI segmentation để tránh tràn RAM Colab)
 - Lấy: **Top 50** kết quả
 - Mục đích: Bắt chính xác thuật ngữ pháp lý cố định ("vốn điều lệ", "Điều 4")
 
@@ -179,7 +178,7 @@ graph LR
 
 - Model: `BAAI/bge-m3` (568M params, hỗ trợ tiếng Việt tốt, trước 03/2026)
 - Alternative: `bkai-foundation-models/vietnamese-bi-encoder`
-- Encode offline toàn bộ chunks → FAISS index
+- Encode offline toàn bộ chunks → Qdrant persistent index
 - Query time: encode câu hỏi → cosine similarity → **Top 50**
 
 **Tầng 3 — RRF Fusion + Reranking**
@@ -463,7 +462,7 @@ Private Phase: CHỈ nộp khi Local Eval ổn định
 | --- | --------------- | ---------------------- | ---------------------------------------- | ------- |
 | 1   | Data Collector  | `step1_collect.py`     | Download & parse HuggingFace datasets    | P0      |
 | 2   | Chunker         | `step2_chunk.py`       | Structural chunking + metadata injection | P0      |
-| 3   | Indexer         | `step3_index.py`       | Build FAISS index + BM25 corpus          | P0      |
+| 3   | Indexer         | `step3_index.py`       | Build Qdrant index + BM25 corpus         | P0      |
 | 4   | Retriever       | `step4_retrieve.py`    | BM25 + Dense + RRF + Reranker            | P0      |
 | 5   | Generator       | `step5_generate.py`    | LLM inference với prompt template        | P0      |
 | 6   | PostProcessor   | `step6_postprocess.py` | 3-tier fallback + JSON assembly          | P0      |

@@ -282,11 +282,11 @@ knowledge_store/
 
 **BM25 Index**:
 - Corpus: 74,397 text chunks
-- Tokenizer: Vietnamese word segmentation (`underthesea` hoặc `pyvi`)
+- Tokenizer: N-gram Regex + Legal Phrases (thay thế Underthesea để tránh tràn RAM 12.7GB trên Colab)
 - Mục tiêu: Top 50 retrieval
 
-**Dense FAISS Index**:
-- Model: `BAAI/bge-m3` (568M params) hoặc `bkai-foundation-models/vietnamese-bi-encoder`
+**Dense Qdrant Index**:
+- Mô hình: `BAAI/bge-m3` (Hỗ trợ đa ngôn ngữ và tiếng Việt rất tốt, base dimension 1024) hoặc `bkai-foundation-models/vietnamese-bi-encoder`
 - Embeddings: 74,397 × 1024-dim vectors
 - Index type: FlatIP (inner product)
 - Mục tiêu: Top 50 retrieval
@@ -298,7 +298,7 @@ knowledge_store/
 
 ### 7.2 Timeline Dự Kiến Phase 2
 
-- **Tuần 1 (09-15/06)**: BM25 + FAISS indexing
+- **Tuần 1 (09-15/06)**: BM25 + Qdrant indexing
 - **Tuần 2 (16-22/06)**: Hybrid retrieval + reranker integration
 - **Tuần 3 (23-29/06)**: LLM generation + post-processing
 - **Tuần 4 (30/06)**: Validation, tuning, submission cuối

@@ -40,7 +40,7 @@ Phase 2 đã **hoàn thành implementation** cho Hybrid Retrieval system với Q
 
 #### **config.py** (updated)
 - Device config: cuda → cpu (fixed CUDA dependency issue)
-- Tokenizer: pyvi → underthesea → simple whitespace
+- Tokenizer: pyvi → underthesea → Regex N-Gram & Legal Phrases (Tránh OOM)
 - Maintained all retrieval hyperparameters
 
 #### **requirements.txt** (updated)
@@ -132,7 +132,7 @@ Approach này inspired by `D:\Project\Chat With Data\src\retrieval\vector_db.py`
 ## 💡 Key Learnings & Solutions
 
 ### Challenge 1: Vietnamese Tokenizer Hang
-**Problem**: pyvi và underthesea tokenizers hung indefinitely khi tokenize 74K chunks  
+**Problem**: pyvi và underthesea tokenizers hung/OOM (vượt 12.7GB RAM) khi tokenize 74K chunks trên Colab.  
 **Root Cause**: Silent model downloads hoặc memory issues  
 **Solution**: Simplified whitespace tokenizer cho BM25  
 **Trade-off**: Độ chính xác tokenization giảm, nhưng reliability tăng  
