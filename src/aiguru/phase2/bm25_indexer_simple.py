@@ -70,24 +70,12 @@ LEGAL_PHRASES = sorted([
 ], key=len, reverse=True)  # Longest phrases first for greedy matching
 
 # Cache availability of underthesea for Vietnamese word segmentation
-_UNDERTHESEA_AVAILABLE: bool | None = None
+_UNDERTHESEA_AVAILABLE: bool | None = False
 
 
 def _try_underthesea_tokenize(text: str) -> list[str] | None:
     """Try to use underthesea for proper Vietnamese word segmentation."""
-    global _UNDERTHESEA_AVAILABLE
-    if _UNDERTHESEA_AVAILABLE is False:
-        return None
-    try:
-        from underthesea import word_tokenize
-        _UNDERTHESEA_AVAILABLE = True
-        segmented = word_tokenize(text, format="list")
-        return [w.lower().replace(" ", "_") for w in segmented if len(w.strip()) > 1]
-    except (ImportError, ModuleNotFoundError):
-        _UNDERTHESEA_AVAILABLE = False
-        return None
-    except Exception:
-        return None
+    return None
 
 
 def ensure_dirs() -> None:
