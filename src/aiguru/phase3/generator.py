@@ -304,7 +304,8 @@ def normalize_retrieval_results(items: Iterable[Any]) -> List[RetrievedChunk]:
     max_score = max((chunk.score for chunk in chunks), default=0.0)
     # LlamaIndex RRF scores are commonly small reciprocal-rank values. Convert
     # those to a relative 0-1 confidence scale expected by Phase 4 thresholds.
-    if 0 < max_score < 0.1:
+    # Only normalize if there is meaningful signal (max_score > 0.005).
+    if 0.005 < max_score < 0.1:
         chunks = [
             RetrievedChunk(
                 chunk_id=chunk.chunk_id,

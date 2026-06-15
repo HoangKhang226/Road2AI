@@ -47,13 +47,19 @@ DOMAIN_EXPANSIONS = {
 
 
 def expand_legal_query(query: str) -> str:
-    lowered = query.lower()
+    # Try Vietnamese word segmentation for better dense retrieval
+    try:
+        from underthesea import word_tokenize
+        segmented = word_tokenize(query, format="text")
+    except (ImportError, Exception):
+        segmented = query
+    lowered = segmented.lower()
     additions = [
         expansion
         for keywords, expansion in DOMAIN_EXPANSIONS.items()
         if any(keyword in lowered for keyword in keywords)
     ]
-    return f"{query} {' '.join(additions)}".strip()
+    return f"{segmented} {' '.join(additions)}".strip()
 
 
 def load_chunk_map(path: Path = CHUNKS_FILE) -> Dict[str, Dict[str, Any]]:
@@ -177,7 +183,7 @@ class HybridLegalRetriever:
         for chunk_id in sorted(fused, key=fused.get, reverse=True):
             chunk = self.chunks.get(chunk_id) or {}
             article = str((chunk.get("metadata") or {}).get("formatted_article") or chunk_id)
-            if article_counts.get(article, 0) >= 2:
+            if article_counts.get(article, 0) >= 1:
                 continue
             article_counts[article] = article_counts.get(article, 0) + 1
             ordered.append(chunk_id)

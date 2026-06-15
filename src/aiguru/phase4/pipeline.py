@@ -23,7 +23,8 @@ def run_generation_pipeline(
     written = 0
     for start in range(0, len(pending), generator.config.batch_size):
         batch = pending[start : start + generator.config.batch_size]
-        contexts: List[list] = []
+        all_contexts: List[list] = []
+        selected_per_question: List[list] = []
         for question in batch:
             if hasattr(retriever, "retrieve_by_id"):
                 items = retriever.retrieve_by_id(int(question["id"]), str(question["question"]))
@@ -31,9 +32,12 @@ def run_generation_pipeline(
                 items = retriever.retrieve(str(question["question"]))
             chunks = normalize_retrieval_results(items)[:retrieval_top_k]
             selected_chunks = postprocessor.select_relevant_chunks(chunks)
-            contexts.append(selected_chunks)
-        answers = generator.generate([str(item["question"]) for item in batch], contexts)
-        for question, answer, chunks in zip(batch, answers, contexts):
+            # LLM sees ALL retrieved chunks for richer context
+            all_contexts.append(chunks)
+            # But only selected eligible chunks go to relevant_articles
+            selected_per_question.append(selected_chunks)
+        answers = generator.generate([str(item["question"]) for item in batch], all_contexts)
+        for question, answer, chunks in zip(batch, answers, selected_per_question):
             result = postprocessor.build_result(
                 question_id=int(question["id"]),
                 question=str(question["question"]),

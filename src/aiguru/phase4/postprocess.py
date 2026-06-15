@@ -21,10 +21,10 @@ class PostProcessConfig:
     safe_threshold: float = 0.3
     high_conf_threshold: float = 0.5
     fallback_threshold: float = 0.0
-    max_articles: int = 3
-    max_context_chunks: int = 10
-    min_high_conf_articles: int = 2
-    max_fallback_citations: int = 3
+    max_articles: int = 8
+    max_context_chunks: int = 20
+    min_high_conf_articles: int = 3
+    max_fallback_citations: int = 5
 
 
 def extract_article_numbers(text: str) -> List[str]:

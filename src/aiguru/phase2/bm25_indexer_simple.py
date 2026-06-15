@@ -27,25 +27,67 @@ from aiguru.phase2.config import (
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
-LEGAL_PHRASES = (
-    "doanh nghiệp nhỏ và vừa",
-    "hộ kinh doanh",
-    "người lao động",
-    "hợp đồng lao động",
-    "bảo hiểm xã hội",
-    "bảo hiểm thất nghiệp",
-    "thuế giá trị gia tăng",
-    "thuế thu nhập doanh nghiệp",
-    "quản lý thuế",
-    "hóa đơn điện tử",
-    "báo cáo tài chính",
-    "sở hữu trí tuệ",
-    "vốn điều lệ",
-    "xử phạt vi phạm hành chính",
-    "khắc phục hậu quả",
-    "mặt bằng sản xuất",
-    "bảo lãnh tín dụng",
-)
+LEGAL_PHRASES = sorted([
+    # SME core
+    "doanh nghiệp nhỏ và vừa", "hỗ trợ doanh nghiệp", "hộ kinh doanh",
+    "doanh nghiệp siêu nhỏ", "doanh nghiệp vừa", "doanh nghiệp nhỏ",
+    "khởi nghiệp sáng tạo", "vốn điều lệ", "đăng ký kinh doanh",
+    "đăng ký doanh nghiệp", "giấy chứng nhận đăng ký",
+    # Labor
+    "người lao động", "hợp đồng lao động", "người sử dụng lao động",
+    "thời giờ làm việc", "tiền lương", "an toàn lao động",
+    "kỷ luật lao động", "sa thải", "nghỉ phép",
+    # Insurance
+    "bảo hiểm xã hội", "bảo hiểm thất nghiệp", "bảo hiểm y tế",
+    # Tax
+    "thuế giá trị gia tăng", "thuế thu nhập doanh nghiệp",
+    "thuế thu nhập cá nhân", "quản lý thuế", "khai thuế", "nộp thuế",
+    "chậm nộp thuế", "hoàn thuế", "miễn thuế", "giảm thuế",
+    "hóa đơn điện tử", "hóa đơn chứng từ",
+    # Accounting
+    "báo cáo tài chính", "kế toán", "kiểm toán",
+    # IP
+    "sở hữu trí tuệ", "nhãn hiệu", "bản quyền", "sáng chế",
+    "kiểu dáng công nghiệp", "chỉ dẫn địa lý",
+    # Contract / Commerce
+    "hợp đồng", "hợp đồng mua bán", "hợp đồng dịch vụ",
+    "thương mại điện tử", "giao dịch điện tử",
+    # Administrative
+    "xử phạt vi phạm hành chính", "khắc phục hậu quả",
+    "vi phạm hành chính", "biện pháp khắc phục",
+    # Land / Facilities
+    "mặt bằng sản xuất", "đất đai", "thuê đất", "quyền sử dụng đất",
+    # Credit
+    "bảo lãnh tín dụng", "quỹ bảo lãnh", "tín dụng",
+    # Bidding
+    "đấu thầu", "nhà thầu",
+    # Legal structure
+    "nghị định", "thông tư", "quyết định", "nghị quyết",
+    "văn bản pháp luật", "quy định pháp luật",
+    # Legal actions
+    "cấp phép", "thu hồi", "đình chỉ", "tạm đình chỉ",
+    "giấy phép", "chứng chỉ hành nghề",
+], key=len, reverse=True)  # Longest phrases first for greedy matching
+
+# Cache availability of underthesea for Vietnamese word segmentation
+_UNDERTHESEA_AVAILABLE: bool | None = None
+
+
+def _try_underthesea_tokenize(text: str) -> list[str] | None:
+    """Try to use underthesea for proper Vietnamese word segmentation."""
+    global _UNDERTHESEA_AVAILABLE
+    if _UNDERTHESEA_AVAILABLE is False:
+        return None
+    try:
+        from underthesea import word_tokenize
+        _UNDERTHESEA_AVAILABLE = True
+        segmented = word_tokenize(text, format="list")
+        return [w.lower().replace(" ", "_") for w in segmented if len(w.strip()) > 1]
+    except (ImportError, ModuleNotFoundError):
+        _UNDERTHESEA_AVAILABLE = False
+        return None
+    except Exception:
+        return None
 
 
 def ensure_dirs() -> None:
@@ -75,13 +117,24 @@ def load_chunks() -> List[Dict[str, Any]]:
 
 
 def simple_tokenize(text: str) -> List[str]:
-    """Deterministic Vietnamese legal tokenizer with phrase bigrams."""
+    """Vietnamese legal tokenizer: underthesea → regex legal phrases fallback."""
     lowered = text.lower()
+    # Always extract legal document IDs (e.g. 04/2017/QH14)
     legal_ids = re.findall(r"\b\d{1,3}/\d{4}/[\wđ-]+\b", lowered)
+    # Always extract legal phrase bigrams
+    phrases = [phrase.replace(" ", "_") for phrase in LEGAL_PHRASES if phrase in lowered]
+
+    # Try underthesea for proper Vietnamese segmentation (works on Colab)
+    segmented = _try_underthesea_tokenize(text)
+    if segmented is not None:
+        return legal_ids + segmented + phrases
+
+    # Fallback: regex word extraction + adjacent bigrams
     words = re.findall(r"[0-9a-zà-ỹđ]+", lowered)
     words = [word for word in words if len(word) > 1 or word.isdigit()]
-    phrases = [phrase.replace(" ", "_") for phrase in LEGAL_PHRASES if phrase in lowered]
-    return legal_ids + words + phrases
+    # Generate adjacent bigrams to approximate compound words
+    bigrams = [f"{words[i]}_{words[i+1]}" for i in range(len(words) - 1)]
+    return legal_ids + words + bigrams + phrases
 
 
 def tokenize_corpus(chunks: List[Dict[str, Any]], batch_size: int = 5000) -> List[List[str]]:

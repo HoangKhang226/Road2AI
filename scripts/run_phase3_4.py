@@ -30,7 +30,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--safe-threshold", type=float, default=0.3)
     parser.add_argument("--high-conf-threshold", type=float, default=0.5)
     parser.add_argument("--min-articles", type=int, default=3)
-    parser.add_argument("--max-articles", type=int, default=10)
+    parser.add_argument("--max-articles", type=int, default=8)
     parser.add_argument("--reset", action="store_true")
     parser.add_argument(
         "--retrieval-cache",
