@@ -159,7 +159,27 @@ class VectorDBManager:
                 embed_model=self.embedding_model,
                 store_nodes_override=True,
             )
-        existing_ids = set(self._index.storage_context.docstore.docs.keys())
+            
+        # VERY IMPORTANT: Use Qdrant directly as the source of truth for checkpointing!
+        # LlamaIndex's docstore gets corrupted easily on Google Drive.
+        existing_ids = set()
+        if self._db_client.collection_exists(self.collection_name):
+            print("🔍 Scanning Qdrant for existing nodes to skip...")
+            all_ids = [n.node_id for n in nodes_to_add]
+            for i in range(0, len(all_ids), 1000):
+                batch_ids = all_ids[i:i+1000]
+                try:
+                    res = self._db_client.retrieve(
+                        collection_name=self.collection_name, 
+                        ids=batch_ids, 
+                        with_payload=False, 
+                        with_vectors=False
+                    )
+                    existing_ids.update([p.id for p in res])
+                except Exception as e:
+                    pass
+            print(f"✅ Found {len(existing_ids)} nodes already safely stored in Qdrant.")
+
         new_nodes = [node for node in nodes_to_add if node.node_id not in existing_ids]
         if not new_nodes:
             print("ℹ️ All nodes already exist in index")
@@ -168,9 +188,21 @@ class VectorDBManager:
         print(f"➕ Inserting {len(new_nodes)} new nodes in checkpointed batches...")
         for start in range(0, len(new_nodes), batch_size):
             batch = new_nodes[start : start + batch_size]
-            self._index.insert_nodes(batch, show_progress=show_progress)
-            self._index.storage_context.persist(persist_dir=str(self.index_metadata_dir))
+            self._index.insert_nodes(batch, show_progress=True)
+            
+            # Reduce Drive I/O: Only persist the JSON docstore every 1000 nodes instead of every 8 nodes
+            # Qdrant already saves automatically! This is just for LlamaIndex's internal cache.
+            if (start + batch_size) % 1000 < batch_size or (start + batch_size) >= len(new_nodes):
+                try:
+                    self._index.storage_context.persist(persist_dir=str(self.index_metadata_dir))
+                except Exception:
+                    pass
             print(f"  Persisted {min(start + batch_size, len(new_nodes))}/{len(new_nodes)} new nodes")
+        
+        try:
+            self._index.storage_context.persist(persist_dir=str(self.index_metadata_dir))
+        except Exception:
+            pass
         print(f"✅ Index persisted to {self.index_metadata_dir}")
         
         return [n.node_id for n in nodes_to_add]
