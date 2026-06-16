@@ -204,7 +204,7 @@ class VectorDBManager:
             
             # Reduce Drive I/O: Only persist the JSON docstore every 1000 nodes instead of every 8 nodes
             # Qdrant already saves automatically! This is just for LlamaIndex's internal cache.
-            if (start + batch_size) % 200 < batch_size or (start + batch_size) >= len(new_nodes):
+            if (start + batch_size) % 1000 < batch_size or (start + batch_size) >= len(new_nodes):
                 try:
                     self._index.storage_context.persist(persist_dir=str(self.index_metadata_dir))
                     # Backup to Drive safely to prevent Colab GPU limit corruption
