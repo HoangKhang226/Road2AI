@@ -162,7 +162,7 @@ class VectorDBManager:
         # VERY IMPORTANT: Use Qdrant directly as the source of truth for checkpointing!
         # LlamaIndex's docstore gets corrupted easily on Google Drive.
         existing_ids = set()
-        if self._db_client.collection_exists(self.collection_name):
+        if self._collection_exists():
             print("🔍 Scanning Qdrant for existing nodes to skip...")
             all_ids = [n.node_id for n in nodes_to_add]
             for i in range(0, len(all_ids), 1000):
