@@ -151,14 +151,13 @@ class VectorDBManager:
         self._index = self.get_index()
         
         if self._index is None:
-            print("🚀 Creating new empty index...")
+            print("🚀 Reconnecting to Qdrant without wiping data...")
             storage_context = self._get_storage_context()
-            self._index = VectorStoreIndex(
-                nodes=[],
-                storage_context=storage_context,
+            self._index = VectorStoreIndex.from_vector_store(
+                vector_store=storage_context.vector_store,
                 embed_model=self.embedding_model,
-                store_nodes_override=True,
             )
+            self._index.storage_context = storage_context
             
         # VERY IMPORTANT: Use Qdrant directly as the source of truth for checkpointing!
         # LlamaIndex's docstore gets corrupted easily on Google Drive.
