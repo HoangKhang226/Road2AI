@@ -195,6 +195,12 @@ class VectorDBManager:
             if (start + batch_size) % 1000 < batch_size or (start + batch_size) >= len(new_nodes):
                 try:
                     self._index.storage_context.persist(persist_dir=str(self.index_metadata_dir))
+                    # Add exact count query for user verification
+                    try:
+                        actual_count = self._db_client.count(collection_name=self.collection_name).count
+                        print(f"  [XÁC NHẬN TỪ QDRANT] Đã lưu cứng vật lý {actual_count} câu vào ổ đĩa!")
+                    except Exception:
+                        pass
                 except Exception:
                     pass
             print(f"  Persisted {min(start + batch_size, len(new_nodes))}/{len(new_nodes)} new nodes")
