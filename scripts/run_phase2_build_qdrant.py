@@ -12,9 +12,8 @@ import hashlib
 import shutil
 from pathlib import Path
 
-# Add src to path
+# Project root is needed for paths.py to resolve paths
 project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root / "src"))
 
 from aiguru.paths import KNOWLEDGE_DIR, STORAGE_DIR
 
