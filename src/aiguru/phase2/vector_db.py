@@ -168,9 +168,9 @@ class VectorDBManager:
             storage_context = self._get_storage_context()
             self._index = VectorStoreIndex.from_vector_store(
                 vector_store=storage_context.vector_store,
+                storage_context=storage_context,
                 embed_model=self.embedding_model,
             )
-            self._index.storage_context = storage_context
             
         # VERY IMPORTANT: Use Qdrant directly as the source of truth for checkpointing!
         # LlamaIndex's docstore gets corrupted easily on Google Drive.
