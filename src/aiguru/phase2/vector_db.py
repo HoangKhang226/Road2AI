@@ -6,6 +6,7 @@ Provides persistent vector storage with Qdrant + hybrid retrieval.
 """
 
 from typing import List, Any, Optional
+from pathlib import Path
 
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
@@ -38,9 +39,21 @@ class VectorDBManager:
         self.collection_name = collection_name
         
         # Storage paths
-        self.base_storage_dir = STORAGE_DIR
+        import os
+        if os.path.exists("/content"):
+            self.base_storage_dir = Path("/content/local_storage")
+        else:
+            self.base_storage_dir = STORAGE_DIR
+            
         self.qdrant_path = self.base_storage_dir / "qdrant_data"
         self.index_metadata_dir = self.base_storage_dir / collection_name
+        
+        # Restore from backup on Colab
+        drive_backup = "/content/drive/MyDrive/AIGuru/storage/qdrant_backup.tar.gz"
+        if os.path.exists("/content") and os.path.exists(drive_backup) and not self.base_storage_dir.exists():
+            print(f"📦 Khôi phục CSDL an toàn từ {drive_backup}...")
+            os.makedirs(self.base_storage_dir, exist_ok=True)
+            os.system(f"tar -xzf {drive_backup} -C {self.base_storage_dir}")
         
         # Create directories
         self.qdrant_path.mkdir(parents=True, exist_ok=True)
