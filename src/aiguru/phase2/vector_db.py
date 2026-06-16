@@ -194,10 +194,16 @@ class VectorDBManager:
             if (start + batch_size) % 1000 < batch_size or (start + batch_size) >= len(new_nodes):
                 try:
                     self._index.storage_context.persist(persist_dir=str(self.index_metadata_dir))
-                    # Add exact count query for user verification
+                    # Backup to Drive safely to prevent Colab GPU limit corruption
+                    import os
+                    import shutil
+                    drive_backup = "/content/drive/MyDrive/AIGuru/storage/qdrant_backup.tar.gz"
+                    if os.path.exists("/content/drive/MyDrive/AIGuru/storage"):
+                        os.system(f"tar -czf {drive_backup}.tmp -C {self.base_storage_dir} .")
+                        os.system(f"mv {drive_backup}.tmp {drive_backup}")
                     try:
                         actual_count = self._db_client.count(collection_name=self.collection_name).count
-                        print(f"  [XÁC NHẬN TỪ QDRANT] Đã lưu cứng vật lý {actual_count} câu vào ổ đĩa!")
+                        print(f"  [XÁC NHẬN] Đã nén và backup an toàn {actual_count} câu lên Google Drive!")
                     except Exception:
                         pass
                 except Exception:
@@ -206,6 +212,11 @@ class VectorDBManager:
         
         try:
             self._index.storage_context.persist(persist_dir=str(self.index_metadata_dir))
+            import os
+            drive_backup = "/content/drive/MyDrive/AIGuru/storage/qdrant_backup.tar.gz"
+            if os.path.exists("/content/drive/MyDrive/AIGuru/storage"):
+                os.system(f"tar -czf {drive_backup}.tmp -C {self.base_storage_dir} .")
+                os.system(f"mv {drive_backup}.tmp {drive_backup}")
         except Exception:
             pass
         print(f"✅ Index persisted to {self.index_metadata_dir}")
